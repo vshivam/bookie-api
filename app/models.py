@@ -1,3 +1,5 @@
+import datetime
+
 from app import db
 
 
@@ -10,10 +12,10 @@ class Note(db.Model):
     book_id = db.Column(db.Integer)
     content = db.Column(db.String)
     is_fav = db.Column(db.Boolean, default=False)
-    date_created = db.Column(db.DateTime, db.func.current_timestamp())
+    date_created = db.Column(db.DateTime, default=datetime.datetime.now)
     date_modified = db.Column(
-        db.DateTime, default=db.func.current_timestamp(),
-        onupdate=db.func.current_timestamp())
+        db.DateTime, default=datetime.datetime.now,
+        onupdate=datetime.datetime.now)
 
     def __init__(self, user_id, book_id, content, is_fav):
         self.user_id = user_id
@@ -24,6 +26,7 @@ class Note(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+        return self
 
     def delete(self):
         db.session.delete(self)
