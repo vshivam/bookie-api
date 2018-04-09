@@ -4,7 +4,7 @@
 class Config(object):
     DEBUG = False
     CSRF_ENABLED = True
-    SECRET = "BOOKIE-AMAZING-SECRET"
+    SECRET_KEY = "BOOKIE-AMAZING-SECRET"
     SQLALCHEMY_DATABASE_URI = "postgresql://postgres:super_amazing_password@localhost:5432/flask_api"
 
 

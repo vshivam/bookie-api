@@ -1,21 +1,24 @@
 from flask import request, jsonify
 from flask_api import FlaskAPI
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import and_
 
 from instance.config import app_config
 
 db = SQLAlchemy()
+login_manager = LoginManager()
 
 
 def create_app(config_name):
     from app.models import Note
+    from app.models import User
 
     app = FlaskAPI(__name__, instance_relative_config=True)
     app.config.from_object(app_config[config_name])
     app.config.from_pyfile('config.py')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
+    login_manager.init_app(app)
 
     @app.route('/', methods=['GET'])
     def index():
@@ -25,12 +28,67 @@ def create_app(config_name):
         response.status_code = 200
         return response
 
-    @app.route('/user/<int:user_id>/notes/<int:note_id>', methods=["GET", "PUT"])
-    @app.route('/user/<int:user_id>/notes/', defaults={'note_id': None}, methods=['GET', 'POST'])
+    @login_required
+    @app.route('/logout')
+    def logout():
+        logout_user()
+
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if current_user is not None and current_user.is_authenticated():
+            response = jsonify({
+                'sessionToken': current_user.get_id()
+            })
+            return response
+        else:
+            email = request.values.get("email")
+            pwd = request.values.get("password")
+
+            user = User.query.filter_by(email=email).first()
+            if user.validate_password(pwd):
+                login_user(user)
+                response = jsonify({
+                    'sessionToken': user.session_token
+                })
+                response.status_code = 200
+                return response
+            else:
+                response = jsonify({
+                    "error": "authentication failed"}
+                )
+                response.status_code = 401
+                return response
+
+    @app.route('/register', methods=['POST'])
+    def register():
+        email = request.values.get('email')
+        pwd = request.values.get('password')
+        user = User.query.filter_by(email=email).first()
+        if user is not None:
+            response = jsonify({
+                'errorMessage': 'email already exists'
+            })
+            response.status_code = 200
+            return response
+        else:
+            user = User(email)
+            user.set_password(pwd)
+            login_user(user)
+            response = jsonify({
+                'sessionToken': user.session_token
+            })
+            response.status_code = 200
+            return response
+
+    @app.route('/user/notes/<int:note_id>', methods=["GET", "PUT"])
+    @app.route('/user/notes/', defaults={'note_id': None}, methods=['GET', 'POST'])
+    @login_required
     def all_notes(user_id, note_id, **kwargs):
         if request.method == "GET":
             if note_id is None:
-                notes = Note.query.filter_by(user_id=user_id)
+                user = User.query.filter_by(User.session_token == current_user.get_id()).first()
+                user_id = user.user_id
+                notes = Note.query.filter_by(user_id == user_id)
                 print(notes)
                 if not notes:
                     response = jsonify({

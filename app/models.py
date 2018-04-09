@@ -1,10 +1,56 @@
 import datetime
 
 from app import db
+from app import login_manager
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+import uuid
+
+
+@login_manager.user_loader
+def load_user(session_token):
+    print(session_token)
+    user = User.query.filter(User.session_token == session_token).first()
+    if user is not None:
+        return user
+    else:
+        return None
+
+
+class User(UserMixin, db.Model):
+    __tablename__ = "user"
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    password_hash = db.Column(db.String(128))
+    session_token = db.Column(db.String(128))
+
+    def __init__(self, email):
+        self.email = email
+        self.session_token = str(uuid.uuid4())
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def validate_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def get_id(self):
+        return self.session_token
+
+    # We don't need inactive users
+    def is_active(self):
+        return True
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def __repr__(self):
+        return '<User {}>'.format(self.username)
 
 
 class Note(db.Model):
-    """ This class represents the Notes table"""
     __tablename__ = "note"
 
     id = db.Column(db.Integer, primary_key=True)
