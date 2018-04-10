@@ -9,8 +9,7 @@ import uuid
 
 @login_manager.user_loader
 def load_user(session_token):
-    print(session_token)
-    user = User.query.filter(User.session_token == session_token).first()
+    user = User.query.filter(User.session_token == str(session_token)).first()
     if user is not None:
         return user
     else:

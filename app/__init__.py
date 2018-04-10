@@ -35,7 +35,7 @@ def create_app(config_name):
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-        if current_user is not None and current_user.is_authenticated():
+        if current_user.is_authenticated:
             response = jsonify({
                 'sessionToken': current_user.get_id()
             })
@@ -44,8 +44,14 @@ def create_app(config_name):
             email = request.values.get("email")
             pwd = request.values.get("password")
 
-            user = User.query.filter_by(email=email).first()
-            if user.validate_password(pwd):
+            user = User.query.filter(User.email == email).first()
+            if user is None:
+                response = jsonify({
+                    'errorMessage': 'email does not exist'
+                })
+                response.status_code = 401
+                return response
+            elif user.validate_password(pwd):
                 login_user(user)
                 response = jsonify({
                     'sessionToken': user.session_token
@@ -54,7 +60,7 @@ def create_app(config_name):
                 return response
             else:
                 response = jsonify({
-                    "error": "authentication failed"}
+                    "errorMessage": "incorrect password"}
                 )
                 response.status_code = 401
                 return response
@@ -63,7 +69,7 @@ def create_app(config_name):
     def register():
         email = request.values.get('email')
         pwd = request.values.get('password')
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter(User.email == email).first()
         if user is not None:
             response = jsonify({
                 'errorMessage': 'email already exists'
@@ -73,6 +79,7 @@ def create_app(config_name):
         else:
             user = User(email)
             user.set_password(pwd)
+            user.save()
             login_user(user)
             response = jsonify({
                 'sessionToken': user.session_token
@@ -80,16 +87,15 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/user/notes/<int:note_id>', methods=["GET", "PUT"])
-    @app.route('/user/notes/', defaults={'note_id': None}, methods=['GET', 'POST'])
+    @app.route('/notes/<int:note_id>', methods=["GET", "PUT"])
+    @app.route('/notes/', defaults={'note_id': None}, methods=['GET', 'POST'])
     @login_required
-    def all_notes(user_id, note_id, **kwargs):
+    def all_notes(note_id, **kwargs):
+        user = User.query.filter(User.session_token == current_user.get_id()).first()
+        user_id = user.id
         if request.method == "GET":
             if note_id is None:
-                user = User.query.filter_by(User.session_token == current_user.get_id()).first()
-                user_id = user.user_id
-                notes = Note.query.filter_by(user_id == user_id)
-                print(notes)
+                notes = Note.query.filter(Note.user_id == user_id)
                 if not notes:
                     response = jsonify({
                         'notes': []
@@ -118,7 +124,6 @@ def create_app(config_name):
                 note = Note.query.filter(Note.user_id == user_id, Note.id == note_id).first()
                 response = jsonify({
                     'id': note.id,
-                    'userId': note.user_id,
                     'bookId': note.book_id,
                     'content': note.content,
                     'isFav': note.is_fav,
@@ -128,7 +133,6 @@ def create_app(config_name):
 
                 response.status_code = 200
                 return response
-
         elif request.method == "POST":
             user_id = request.values.get("userId")
             book_id = request.data.get('bookId')
