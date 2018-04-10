@@ -32,6 +32,11 @@ def create_app(config_name):
     @app.route('/logout')
     def logout():
         logout_user()
+        response = jsonify({
+            'message': 'logged out successfully'
+        })
+        response.status_code = 200
+        return response
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
@@ -134,7 +139,6 @@ def create_app(config_name):
                 response.status_code = 200
                 return response
         elif request.method == "POST":
-            user_id = request.values.get("userId")
             book_id = request.data.get('bookId')
             content = request.data.get('content')
             is_fav = request.data.get('isFav')
@@ -184,6 +188,12 @@ def create_app(config_name):
                     })
 
                     response.status_code = 200
+                    return response
+                else:
+                    response = jsonify({
+                        'errorMessage': 'content value is missing'
+                    })
+                    response.status_code = 422
                     return response
 
     return app
