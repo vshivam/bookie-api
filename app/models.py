@@ -54,7 +54,7 @@ class Note(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
-    book_id = db.Column(db.Integer)
+    book_id = db.Column(db.Text)
     content = db.Column(db.String)
     is_fav = db.Column(db.Boolean, default=False)
     date_created = db.Column(db.DateTime, default=datetime.datetime.now)
