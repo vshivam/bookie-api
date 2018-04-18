@@ -20,6 +20,7 @@ Per user Note creation, editing, retrieval.
 
 # File Description
 app/models.py - Database structure
+
 app/__init__.py - REST methods
 
 instance/config.py - Configuration info
