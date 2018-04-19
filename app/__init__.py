@@ -3,6 +3,8 @@ from flask_api import FlaskAPI
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from sqlalchemy import and_
+
 from instance.config import app_config
 
 db = SQLAlchemy()
@@ -12,7 +14,6 @@ login_manager = LoginManager()
 def create_app(config_name):
     from app.models import Note
     from app.models import User
-
 
     app = FlaskAPI(__name__, instance_relative_config=True)
     CORS(app, supports_credentials=True)
@@ -94,6 +95,38 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
+    @app.route('/book/<string:book_id>', methods=['GET'])
+    @login_required
+    def get_notes_for_book(book_id, **kwargs):
+        user = User.query.filter(User.session_token == current_user.get_id()).first()
+        user_id = user.id
+        if request.method == "GET":
+            notes = Note.query.filter(and_(Note.user_id == user_id, Note.book_id == book_id))
+            if not notes:
+                response = jsonify({
+                    'bookId': book_id,
+                    'notes': []
+                })
+                response.status_code = 200
+                return response
+            else:
+                results = []
+                for note in notes:
+                    obj = {
+                        'id': note.id,
+                        'bookId': note.book_id,
+                        'content': note.content,
+                        'isFav': note.is_fav
+                    }
+                    results.append(obj)
+
+                response = jsonify({
+                    'bookId': book_id,
+                    'notes': results
+                })
+                response.status_code = 200
+                return response
+
     @app.route('/notes/<int:note_id>', methods=["GET", "PUT"])
     @app.route('/notes/', defaults={'note_id': None}, methods=['GET', 'POST'])
     @login_required
@@ -105,6 +138,7 @@ def create_app(config_name):
                 notes = Note.query.filter(Note.user_id == user_id)
                 if not notes:
                     response = jsonify({
+                        'userId': user_id,
                         'notes': []
                     })
                     response.status_code = 200
