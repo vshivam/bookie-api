@@ -2,7 +2,7 @@ from flask import request, jsonify
 from flask_api import FlaskAPI
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
-
+from flask_cors import CORS
 from instance.config import app_config
 
 db = SQLAlchemy()
@@ -13,7 +13,9 @@ def create_app(config_name):
     from app.models import Note
     from app.models import User
 
+
     app = FlaskAPI(__name__, instance_relative_config=True)
+    CORS(app, supports_credentials=True)
     app.config.from_object(app_config[config_name])
     app.config.from_pyfile('config.py')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
