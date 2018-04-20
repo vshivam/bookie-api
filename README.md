@@ -1,6 +1,6 @@
 ## Project Description
 
-[Bookie API](https://bookie.adaszyn.site/) is the backend service for the [Bookie](https://github.com/adaszyn/bookie-app/) web app. 
+Bookie API is the backend service for the [Bookie](https://github.com/adaszyn/bookie-app/) web app. 
 
 ## Done  
 
