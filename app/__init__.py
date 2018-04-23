@@ -1,3 +1,4 @@
+import json
 from flask import request, jsonify
 from flask_api import FlaskAPI
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
@@ -112,13 +113,7 @@ def create_app(config_name):
             else:
                 results = []
                 for note in notes:
-                    obj = {
-                        'id': note.id,
-                        'bookId': note.book_id,
-                        'content': note.content,
-                        'isFav': note.is_fav
-                    }
-                    results.append(obj)
+                    results.append(note.get_response_object())
 
                 response = jsonify({
                     'bookId': book_id,
@@ -147,13 +142,7 @@ def create_app(config_name):
                     results = []
 
                     for note in notes:
-                        obj = {
-                            'id': note.id,
-                            'bookId': note.book_id,
-                            'content': note.content,
-                            'isFav': note.is_fav
-                        }
-                        results.append(obj)
+                        results.append(note.get_response_object())
 
                     response = jsonify({
                         'userId': user_id,
@@ -163,15 +152,7 @@ def create_app(config_name):
                     return response
             else:
                 note = Note.query.filter(Note.user_id == user_id, Note.id == note_id).first()
-                response = jsonify({
-                    'id': note.id,
-                    'bookId': note.book_id,
-                    'content': note.content,
-                    'isFav': note.is_fav,
-                    'dateCreated': note.date_created,
-                    'dateModified': note.date_modified
-                })
-
+                response = jsonify(note.get_response_object())
                 response.status_code = 200
                 return response
         elif request.method == "POST":
@@ -179,20 +160,26 @@ def create_app(config_name):
             content = request.data.get('content')
             is_fav = request.data.get('isFav')
             is_fav = is_fav == 'True' or is_fav == 'true'
+            tags = request.data.get('tags')
+
             if user_id and book_id and content:
-                new_note = Note(user_id, book_id, content, is_fav)
+                if tags is None:
+                    tags = '[]'
+                else:
+                    try:
+                        tags_array = json.loads(tags)
+                        if not isinstance(tags_array, list):
+                            response = jsonify({'errorMessage': 'tags need to be a valid json array'})
+                            response.status_code = 422
+                            return response
+                    except ValueError:
+                        response = jsonify({'errorMessage': 'tags need to be a valid json array'})
+                        response.status_code = 422
+                        return response
+                new_note = Note(user_id, book_id, content, is_fav, tags)
                 new_note.save()
 
-                response = jsonify({
-                    'id': new_note.id,
-                    'userId': new_note.user_id,
-                    'bookId': new_note.book_id,
-                    'content': new_note.content,
-                    'isFav': new_note.is_fav,
-                    'dateCreated': new_note.date_created,
-                    'dateModified': new_note.date_modified
-                })
-
+                response = jsonify(new_note.get_response_object())
                 response.status_code = 201
                 return response
             else:
@@ -208,21 +195,16 @@ def create_app(config_name):
                 content = request.data.get('content')
                 is_fav = request.data.get('isFav')
                 is_fav = is_fav == 'True' or is_fav == 'true'
-                if user_id and content:
+                tags = request.data.get('tags')
+                if content is not None:
                     note = Note.query.filter(Note.user_id == user_id, Note.id == note_id).first()
                     note.content = content
                     note.is_fav = is_fav
-                    updated = note.save()
-                    response = jsonify({
-                        'id': updated.id,
-                        'userId': updated.user_id,
-                        'bookId': updated.book_id,
-                        'content': updated.content,
-                        'isFav': updated.is_fav,
-                        'dateCreated': updated.date_created,
-                        'dateModified': updated.date_modified
-                    })
+                    note.tags = tags
 
+                    updated = note.save()
+
+                    response = jsonify(updated.get_response_object())
                     response.status_code = 200
                     return response
                 else:
