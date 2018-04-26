@@ -1,4 +1,3 @@
-import json
 from flask import request, jsonify
 from flask_api import FlaskAPI
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
@@ -163,20 +162,7 @@ def create_app(config_name):
             tags = request.data.get('tags')
 
             if user_id and book_id and content:
-                if tags is None:
-                    tags = '[]'
-                else:
-                    try:
-                        tags_array = json.loads(tags)
-                        if not isinstance(tags_array, list):
-                            response = jsonify({'errorMessage': 'tags need to be a valid json array'})
-                            response.status_code = 422
-                            return response
-                    except ValueError:
-                        response = jsonify({'errorMessage': 'tags need to be a valid json array'})
-                        response.status_code = 422
-                        return response
-                new_note = Note(user_id, book_id, content, is_fav, tags)
+                new_note = Note(user_id, book_id, content, is_fav, tags if tags is not None else "")
                 new_note.save()
 
                 response = jsonify(new_note.get_response_object())
