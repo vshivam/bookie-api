@@ -121,7 +121,7 @@ def create_app(config_name):
                 response.status_code = 200
                 return response
 
-    @app.route('/notes/<int:note_id>', methods=["GET", "PUT"])
+    @app.route('/notes/<int:note_id>', methods=["GET", "PUT", "DELETE"])
     @app.route('/notes/', defaults={'note_id': None}, methods=['GET', 'POST'])
     @login_required
     def all_notes(note_id, **kwargs):
@@ -199,5 +199,19 @@ def create_app(config_name):
                     })
                     response.status_code = 422
                     return response
+        elif request.method == "DELETE":
+            if note_id is None:
+                response = jsonify({'errorMessage': 'note id is missing'})
+                response.status_code = 422
+                return response
+
+            note = Note.query.filter(Note.user_id == user_id, Note.id == note_id).first()
+            note.delete()
+
+            response = jsonify({
+                'successMessage': 'successfully deleted note'
+            })
+            response.status_code = 200
+            return response
 
     return app
