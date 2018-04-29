@@ -156,13 +156,14 @@ def create_app(config_name):
                 return response
         elif request.method == "POST":
             book_id = request.data.get('bookId')
+            title = request.data.get('title')
             content = request.data.get('content')
             is_fav = request.data.get('isFav')
             is_fav = is_fav == 'True' or is_fav == 'true'
             tags = request.data.get('tags')
 
-            if user_id and book_id and content:
-                new_note = Note(user_id, book_id, content, is_fav, tags if tags is not None else "")
+            if user_id and title and book_id and content:
+                new_note = Note(user_id, book_id, title, content, is_fav, tags if tags is not None else "")
                 new_note.save()
 
                 response = jsonify(new_note.get_response_object())
@@ -178,12 +179,14 @@ def create_app(config_name):
                 response.status_code = 422
                 return response
             else:
+                title = request.data.get('title')
                 content = request.data.get('content')
                 is_fav = request.data.get('isFav')
                 is_fav = is_fav == 'True' or is_fav == 'true'
                 tags = request.data.get('tags')
                 if content is not None:
                     note = Note.query.filter(Note.user_id == user_id, Note.id == note_id).first()
+                    note.title = title
                     note.content = content
                     note.is_fav = is_fav
                     note.tags = tags

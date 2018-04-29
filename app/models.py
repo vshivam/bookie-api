@@ -46,7 +46,7 @@ class User(UserMixin, db.Model):
         db.session.commit()
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return '<User {}>'.format(self.email)
 
 
 class Note(db.Model):
@@ -55,6 +55,7 @@ class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     book_id = db.Column(db.Text)
+    title = db.Column(db.String)
     content = db.Column(db.String)
     is_fav = db.Column(db.Boolean, default=False)
     tags = db.Column(db.String)
@@ -63,9 +64,10 @@ class Note(db.Model):
         db.DateTime, default=datetime.datetime.now,
         onupdate=datetime.datetime.now)
 
-    def __init__(self, user_id, book_id, content, is_fav, tags):
+    def __init__(self, user_id, book_id, title, content, is_fav, tags):
         self.user_id = user_id
         self.book_id = book_id
+        self.title = title
         self.content = content
         self.is_fav = is_fav
         self.tags = tags
@@ -83,6 +85,7 @@ class Note(db.Model):
         return {
             'id': self.id,
             'bookId': self.book_id,
+            'title': self.title if self.title is not None else "",
             'content': self.content,
             'isFav': self.is_fav,
             'tags': self.tags if self.tags is not None else "",
