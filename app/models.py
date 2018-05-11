@@ -89,8 +89,8 @@ class Note(db.Model):
             'content': self.content,
             'isFav': self.is_fav,
             'tags': self.tags if self.tags is not None else "",
-            'dateCreated': self.date_created,
-            'dateModified': self.date_modified
+            'dateCreated': self.date_created.isoformat(),
+            'dateModified': self.date_modified.isoformat()
         }
 
     def __repr__(self):
