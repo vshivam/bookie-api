@@ -1,9 +1,11 @@
-from flask import request, jsonify
+from flask import request, jsonify, url_for
 from flask_api import FlaskAPI
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy import and_
+from werkzeug.utils import secure_filename
+import os
 
 from instance.config import app_config
 
@@ -20,6 +22,9 @@ def create_app(config_name):
     app.config.from_object(app_config[config_name])
     app.config.from_pyfile('config.py')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['UPLOAD_FOLDER'] = "./images/"
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
     db.init_app(app)
     login_manager.init_app(app)
 
@@ -216,5 +221,27 @@ def create_app(config_name):
             })
             response.status_code = 200
             return response
+
+    @app.route('/images/upload', methods=['POST'])
+    @login_required
+    def upload_image():
+        user = User.query.filter(User.session_token == current_user.get_id()).first()
+        user_id = user.id
+        if 'file' not in request.files:
+            response = jsonify({
+                'errorMessage': 'file missing'
+            })
+            response.status_code = 422
+            return response
+        else:
+            file_input = request.files['file']
+            if file_input:
+                filename = secure_filename(file_input.filename)
+                file_input.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                response = jsonify({
+                    'url': url_for('upload_image',
+                                   filename=filename)
+                })
+                response.status_code = 200
 
     return app
