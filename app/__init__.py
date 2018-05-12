@@ -1,4 +1,4 @@
-from flask import request, jsonify, url_for
+from flask import request, jsonify, url_for, make_response
 from flask_api import FlaskAPI
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
@@ -222,26 +222,44 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/images/upload', methods=['POST'])
+    @app.route('/images/', methods=['GET', 'POST'])
     @login_required
     def upload_image():
         user = User.query.filter(User.session_token == current_user.get_id()).first()
         user_id = user.id
-        if 'file' not in request.files:
-            response = jsonify({
-                'errorMessage': 'file missing'
-            })
-            response.status_code = 422
-            return response
-        else:
-            file_input = request.files['file']
-            if file_input:
-                filename = secure_filename(file_input.filename)
-                file_input.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        user_dir_path = os.path.join(app.config['UPLOAD_FOLDER'], str(user_id))
+        if request.method == 'POST':
+            if not os.path.exists(user_dir_path):
+                os.makedirs(user_dir_path)
+            if 'file' not in request.files:
                 response = jsonify({
-                    'url': url_for('upload_image',
-                                   filename=filename)
+                    'errorMessage': 'file missing'
                 })
-                response.status_code = 200
+                response.status_code = 422
+                return response
+            else:
+                file_input = request.files['file']
+                if file_input:
+                    filename = secure_filename(file_input.filename)
+                    file_input.save(os.path.join(user_dir_path, filename))
+                    response = jsonify({
+                        'url': url_for('upload_image',
+                                       filename=filename)
+                    })
+                    response.status_code = 200
+                    return response
+        elif request.method == 'GET':
+            filename = request.args.get('filename')
+            filepath = os.path.join(user_dir_path, filename)
+            if not os.path.exists(filepath):
+                response = jsonify({
+                    'errorMessage': 'file does not exist'
+                })
+                response.status_code = 404
+                return response
+            response = make_response(open(filepath, 'rb').read())
+            response.content_type = "image/jpeg"
+            response.status_code == 200
+            return response
 
     return app
