@@ -100,13 +100,14 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/book/<string:book_id>', methods=['GET'])
+    @app.route('/book/<string:book_id>', methods=['GET', 'DELETE'])
     @login_required
-    def get_notes_for_book(book_id, **kwargs):
+    def book(book_id, **kwargs):
         user = User.query.filter(User.session_token == current_user.get_id()).first()
         user_id = user.id
+        notes = Note.query.filter(and_(Note.user_id == user_id, Note.book_id == book_id)).all()
+
         if request.method == "GET":
-            notes = Note.query.filter(and_(Note.user_id == user_id, Note.book_id == book_id))
             if not notes:
                 response = jsonify({
                     'bookId': book_id,
@@ -125,6 +126,13 @@ def create_app(config_name):
                 })
                 response.status_code = 200
                 return response
+        elif request.method == "DELETE":
+            if notes:
+                for note in notes:
+                    note.delete()
+            response = jsonify({'success': 'all notes deleted'})
+            response.status_code = 200
+            return response
 
     @app.route('/notes/<int:note_id>', methods=["GET", "PUT", "DELETE"])
     @app.route('/notes/', defaults={'note_id': None}, methods=['GET', 'POST'])

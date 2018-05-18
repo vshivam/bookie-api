@@ -14,10 +14,13 @@ We have completed the following things thus far:
     - New User Signup
     - User Login
     - User Logout 
-    - Notes Creation
-    - Notes Editing
-    - Notes Update
-
+    - Note Creation
+    - Note Editing
+    - Note Update
+    - Note Delete
+    - Manage Note Tags
+    - Upload Images
+    - Book Delete
 ## Your project file structure:
 
 ```
@@ -35,16 +38,3 @@ manage.py (helper methods for database migration)
 
 run.py (run flask server)
 ```
-
-## To do
-- Delete Notes
-- Add tags support for Notes
-- API will evolve as required by the frontend. 
-
-
-
-
-
-
-
-
