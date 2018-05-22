@@ -4,8 +4,6 @@ Bookie API is the backend service for the [Bookie](https://github.com/adaszyn/bo
 
 ## Done  
 
-We have completed the following things thus far: 
-
 - Project setup
     - [Flask](http://flask.pocoo.org/)
     - [SQLAlchemy](https://www.sqlalchemy.org/)
