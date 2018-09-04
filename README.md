@@ -1,3 +1,5 @@
+![Logo](https://raw.githubusercontent.com/adaszyn/bookie-app/master/logo.png)
+
 ## Project Description
 
 Bookie API is the backend service for the [Bookie](https://github.com/adaszyn/bookie-app/) web app. 
