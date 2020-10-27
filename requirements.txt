@@ -8,7 +8,7 @@ cloud-init==18.2
 colorama==0.3.7
 command-not-found==0.3
 configobj==5.0.6
-cryptography==1.2.3
+cryptography==3.2
 docutils==0.12
 Flask==0.12.2
 Flask-API==1.0
