@@ -41,7 +41,7 @@ python-dateutil==2.7.2
 python-debian==0.1.27
 python-editor==1.0.3
 python-systemd==231
-PyYAML==3.11
+PyYAML==5.4
 requests==2.9.1
 roman==2.0.0
 rsa==3.2.3
